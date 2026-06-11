@@ -2,12 +2,15 @@ import { DWD_WARNCELL_GEOJSON_URL, WARNCELL_CACHE_TTL_MS } from '../settings';
 import type { DwdSevereWeatherConfig } from '../config';
 import type { FileCache } from '../utils/cache';
 import { fetchWithRetry } from '../utils/retry';
-import { pointInMultiPolygon, pointInPolygon } from '../utils/geo';
+import {
+  pointInMultiPolygon,
+  pointInPolygon,
+  type MultiPolygonCoordinates,
+  type PolygonCoordinates,
+} from '../utils/geo';
 import type {
   GeoPoint,
-  MultiPolygonCoordinates,
   PluginCacheData,
-  PolygonCoordinates,
   WarnCellCacheEntry,
 } from './types';
 

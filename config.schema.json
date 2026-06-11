@@ -1,0 +1,306 @@
+{
+  "pluginAlias": "DwdSevereWeather",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "required": [
+      "name",
+      "latitude",
+      "longitude"
+    ],
+    "properties": {
+      "platform": {
+        "title": "Platform",
+        "type": "string",
+        "default": "DwdSevereWeather",
+        "readonly": true
+      },
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "DWD Unwetter",
+        "required": true
+      },
+      "latitude": {
+        "title": "Latitude",
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "required": true
+      },
+      "longitude": {
+        "title": "Longitude",
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "required": true
+      },
+      "warnCellId": {
+        "title": "Warncell ID",
+        "type": "string",
+        "description": "Optional fixed DWD warncell/community ID. If omitted, the plugin resolves it from latitude/longitude."
+      },
+      "pollIntervalMinutes": {
+        "title": "Polling interval in minutes",
+        "type": "integer",
+        "default": 5,
+        "minimum": 5
+      },
+      "sensorType": {
+        "title": "HomeKit sensor type",
+        "type": "string",
+        "default": "occupancy",
+        "oneOf": [
+          {
+            "title": "Occupancy Sensor",
+            "enum": [
+              "occupancy"
+            ]
+          },
+          {
+            "title": "Motion Sensor",
+            "enum": [
+              "motion"
+            ]
+          },
+          {
+            "title": "Contact Sensor",
+            "enum": [
+              "contact"
+            ]
+          },
+          {
+            "title": "Switch",
+            "enum": [
+              "switch"
+            ]
+          }
+        ]
+      },
+      "overallSensor": {
+        "title": "Overall status sensor",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "title": "Create overall sensor",
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "warnings": {
+        "title": "Official warning categories",
+        "type": "object",
+        "properties": {
+          "thunderstorm": {
+            "title": "Thunderstorm",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "title": "Enabled",
+                "type": "boolean",
+                "default": true
+              },
+              "minimumLevel": {
+                "title": "Minimum warning level",
+                "type": "string",
+                "default": "orange",
+                "oneOf": [
+                  {
+                    "title": "Yellow",
+                    "enum": [
+                      "yellow"
+                    ]
+                  },
+                  {
+                    "title": "Orange",
+                    "enum": [
+                      "orange"
+                    ]
+                  },
+                  {
+                    "title": "Red",
+                    "enum": [
+                      "red"
+                    ]
+                  },
+                  {
+                    "title": "Purple / Extreme",
+                    "enum": [
+                      "purple",
+                      "extreme"
+                    ]
+                  }
+                ]
+              },
+              "includePreWarnings": {
+                "title": "Include prewarnings",
+                "type": "boolean",
+                "default": false
+              }
+            }
+          },
+          "storm": {
+            "title": "Storm / Wind",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "title": "Enabled",
+                "type": "boolean",
+                "default": true
+              },
+              "minimumLevel": {
+                "title": "Minimum warning level",
+                "type": "string",
+                "default": "yellow",
+                "oneOf": [
+                  {
+                    "title": "Yellow",
+                    "enum": [
+                      "yellow"
+                    ]
+                  },
+                  {
+                    "title": "Orange",
+                    "enum": [
+                      "orange"
+                    ]
+                  },
+                  {
+                    "title": "Red",
+                    "enum": [
+                      "red"
+                    ]
+                  },
+                  {
+                    "title": "Purple / Extreme",
+                    "enum": [
+                      "purple",
+                      "extreme"
+                    ]
+                  }
+                ]
+              },
+              "includePreWarnings": {
+                "title": "Include prewarnings",
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        }
+      },
+      "crowdReports": {
+        "title": "WarnWetter/crowdsourcing reports",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "title": "Enable crowd reports",
+            "type": "boolean",
+            "default": false
+          },
+          "radiusKm": {
+            "title": "Radius in km",
+            "type": "number",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "maxAgeMinutes": {
+            "title": "Maximum report age in minutes",
+            "type": "integer",
+            "default": 60,
+            "minimum": 5,
+            "maximum": 1440
+          },
+          "minimumReports": {
+            "title": "Minimum matching reports",
+            "type": "integer",
+            "default": 2,
+            "minimum": 1,
+            "maximum": 20
+          },
+          "mode": {
+            "title": "Combination mode",
+            "type": "string",
+            "default": "officialOnly",
+            "oneOf": [
+              {
+                "title": "Official warnings only",
+                "enum": [
+                  "officialOnly"
+                ]
+              },
+              {
+                "title": "Crowd reports only",
+                "enum": [
+                  "crowdOnly"
+                ]
+              },
+              {
+                "title": "Official warning or crowd reports",
+                "enum": [
+                  "officialOrCrowd"
+                ]
+              },
+              {
+                "title": "Official warning and crowd reports",
+                "enum": [
+                  "officialAndCrowd"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "debug": {
+        "title": "Debug logging",
+        "type": "boolean",
+        "default": false
+      }
+    }
+  },
+  "layout": [
+    {
+      "type": "section",
+      "title": "Location",
+      "items": [
+        "name",
+        "latitude",
+        "longitude",
+        "warnCellId"
+      ]
+    },
+    {
+      "type": "section",
+      "title": "Sensors",
+      "items": [
+        "sensorType",
+        "overallSensor"
+      ]
+    },
+    {
+      "type": "section",
+      "title": "Warnings",
+      "items": [
+        "warnings"
+      ]
+    },
+    {
+      "type": "section",
+      "title": "Crowd reports",
+      "items": [
+        "crowdReports"
+      ]
+    },
+    {
+      "type": "section",
+      "title": "Advanced",
+      "items": [
+        "pollIntervalMinutes",
+        "debug"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "homebridge-dwd-severe-weather",
+  "version": "0.1.0",
+  "description": "Homebridge dynamic platform plugin for severe weather warnings from the German Weather Service (DWD).",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=20",
+    "homebridge": ">=2 <3"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "homebridge",
+    "dwd",
+    "weather",
+    "severe-weather",
+    "unwetter"
+  ],
+  "files": [
+    "dist",
+    "config.schema.json",
+    "README.md",
+    "examples"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "lint": "eslint src test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run lint && npm run test && npm run build"
+  },
+  "peerDependencies": {
+    "homebridge": ">=2 <3"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.1",
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^22.10.7",
+    "eslint": "^9.18.0",
+    "homebridge": "^2.0.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^2.1.8"
+  },
+  "homebridge": {
+    "pluginAlias": "DwdSevereWeather",
+    "pluginType": "platform"
+  }
+}

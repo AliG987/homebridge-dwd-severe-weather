@@ -1,0 +1,31 @@
+{
+  "platform": "DwdSevereWeather",
+  "name": "DWD Unwetter",
+  "latitude": 52.52,
+  "longitude": 13.405,
+  "pollIntervalMinutes": 5,
+  "sensorType": "occupancy",
+  "overallSensor": {
+    "enabled": true
+  },
+  "warnings": {
+    "thunderstorm": {
+      "enabled": true,
+      "minimumLevel": "orange",
+      "includePreWarnings": false
+    },
+    "storm": {
+      "enabled": true,
+      "minimumLevel": "yellow",
+      "includePreWarnings": false
+    }
+  },
+  "crowdReports": {
+    "enabled": false,
+    "radiusKm": 10,
+    "maxAgeMinutes": 60,
+    "minimumReports": 2,
+    "mode": "officialOnly"
+  },
+  "debug": false
+}

@@ -3,9 +3,18 @@
   "version": "0.1.0",
   "description": "Homebridge dynamic platform plugin for severe weather warnings from the German Weather Service (DWD).",
   "license": "MIT",
+  "author": "AliG987",
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "homepage": "https://github.com/AliG987/homebridge-dwd-severe-weather#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AliG987/homebridge-dwd-severe-weather.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AliG987/homebridge-dwd-severe-weather/issues"
+  },
   "engines": {
     "node": ">=20",
     "homebridge": ">=2 <3"

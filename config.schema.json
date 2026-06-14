@@ -89,6 +89,24 @@
           }
         }
       },
+      "groupedWeatherWarnings": {
+        "title": "Grouped Matter warning sensors",
+        "type": "object",
+        "description": "Optional Matter-only grouped warning accessory. Requires Matter to be enabled for this Homebridge bridge.",
+        "properties": {
+          "enabled": {
+            "title": "Create grouped Matter accessory",
+            "type": "boolean",
+            "default": false
+          },
+          "includeHail": {
+            "title": "Include hail child sensor",
+            "type": "boolean",
+            "default": true,
+            "description": "Hail is based on crowd/user reports only and remains inactive until a live crowd report provider is available."
+          }
+        }
+      },
       "warnings": {
         "title": "Official warning categories",
         "type": "object",
@@ -277,7 +295,8 @@
       "title": "Sensors",
       "items": [
         "sensorType",
-        "overallSensor"
+        "overallSensor",
+        "groupedWeatherWarnings"
       ]
     },
     {

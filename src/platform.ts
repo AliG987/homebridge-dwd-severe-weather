@@ -24,13 +24,29 @@ import type {
   SensorCategory,
   WeatherWarningCategory,
 } from './dwd/types';
-import { buildCategoryState, buildOverallState, getDisplayName } from './dwd/warningMapping';
+import {
+  buildCategoryState,
+  buildHailState,
+  buildOverallState,
+  getDisplayName,
+} from './dwd/warningMapping';
 import { FileCache } from './utils/cache';
 import { PluginLogger } from './utils/logger';
 import { WeatherWarningAccessory } from './homekit/WeatherWarningAccessory';
+import {
+  buildGroupedMatterWarningAccessory,
+  getGroupedMatterPartIds,
+  hasRainSensorDeviceType,
+  hasSameGroupedMatterParts,
+  isGroupedMatterWarningAccessory,
+  type MatterAccessoryLike,
+  type MatterApiLike,
+  updateGroupedMatterWarningStates,
+} from './matter/GroupedWeatherWarningMatterAccessory';
 
 export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
   private readonly cachedAccessories = new Map<string, PlatformAccessory>();
+  private readonly cachedMatterAccessories = new Map<string, MatterAccessoryLike>();
   private readonly managedAccessories = new Map<SensorCategory, WeatherWarningAccessory>();
   private readonly cache: FileCache<PluginCacheData>;
   private readonly warningsClient: DwdWarningsClient;
@@ -43,6 +59,8 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
   private pollInProgress = false;
   private consecutiveFailures = 0;
   private lastSuccessfulUpdate: string | undefined;
+  private groupedMatterParentUuid: string | undefined;
+  private groupedMatterPartIds: SensorCategory[] = [];
 
   public constructor(
     log: Logger,
@@ -83,6 +101,10 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
     this.cachedAccessories.set(accessory.UUID, accessory);
   }
 
+  public configureMatterAccessory(accessory: MatterAccessoryLike): void {
+    this.cachedMatterAccessories.set(accessory.UUID, accessory);
+  }
+
   private async start(): Promise<void> {
     if (!this.validatedConfig) {
       this.logger.error('DWD severe weather platform disabled because the configuration is invalid.');
@@ -90,6 +112,14 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
     }
 
     this.syncAccessories();
+    try {
+      await this.syncMatterAccessories();
+    } catch (error) {
+      this.logger.warnRateLimited(
+        'matter-sync',
+        `Could not sync grouped Matter warning sensors: ${errorMessage(error)}`,
+      );
+    }
     await this.restoreCachedState();
     await this.pollOnce();
 
@@ -164,6 +194,82 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
         ),
       );
     }
+  }
+
+  private async syncMatterAccessories(): Promise<void> {
+    const config = this.requireConfig();
+    const matter = this.getMatterApi();
+    this.groupedMatterParentUuid = undefined;
+    this.groupedMatterPartIds = [];
+
+    if (!matter || !this.isMatterEnabled()) {
+      if (config.groupedWeatherWarnings.enabled) {
+        this.logger.warnRateLimited(
+          'matter-disabled',
+          'Grouped Matter warning sensors are enabled in config, but Matter is not enabled for this '
+            + 'Homebridge bridge.',
+        );
+      }
+      return;
+    }
+
+    const desiredOptions = {
+      uuid: this.api.hap.uuid.generate(
+        `${PLUGIN_NAME}:${config.name}:matter:groupedWeatherWarnings`,
+      ),
+      displayName: config.name,
+      includeThunderstorm: config.warnings.thunderstorm.enabled,
+      includeStorm: config.warnings.storm.enabled,
+      includeHail: config.groupedWeatherWarnings.includeHail,
+      includeOverall: config.overallSensor.enabled,
+    };
+    const desiredPartIds = getGroupedMatterPartIds(desiredOptions);
+
+    const staleAccessories = [...this.cachedMatterAccessories.values()].filter(
+      (accessory) =>
+        isGroupedMatterWarningAccessory(accessory) &&
+        (!config.groupedWeatherWarnings.enabled ||
+          accessory.UUID !== desiredOptions.uuid ||
+          !hasSameGroupedMatterParts(accessory, desiredPartIds)),
+    );
+
+    if (staleAccessories.length > 0) {
+      await matter.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, staleAccessories);
+      for (const accessory of staleAccessories) {
+        this.cachedMatterAccessories.delete(accessory.UUID);
+      }
+    }
+
+    if (!config.groupedWeatherWarnings.enabled) {
+      return;
+    }
+
+    if (desiredPartIds.length === 0) {
+      this.logger.warnRateLimited(
+        'matter-no-parts',
+        'Grouped Matter warning sensors are enabled, but no warning parts are configured.',
+      );
+      return;
+    }
+
+    if (!hasRainSensorDeviceType(matter)) {
+      this.logger.warnRateLimited(
+        'matter-rain-fallback',
+        'Homebridge does not expose a Matter RainSensor device type; grouped Matter warning sensors '
+          + 'use ContactSensor fallback parts.',
+      );
+    }
+
+    const cachedAccessory = this.cachedMatterAccessories.get(desiredOptions.uuid);
+    const accessory = buildGroupedMatterWarningAccessory(matter, desiredOptions);
+
+    if (!cachedAccessory) {
+      await matter.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.cachedMatterAccessories.set(accessory.UUID, accessory);
+    }
+
+    this.groupedMatterParentUuid = desiredOptions.uuid;
+    this.groupedMatterPartIds = desiredPartIds;
   }
 
   private async restoreCachedState(): Promise<void> {
@@ -244,6 +350,10 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
       ? [...categoryStates, buildOverallState(categoryStates, now)]
       : categoryStates;
 
+    if (config.groupedWeatherWarnings.enabled && config.groupedWeatherWarnings.includeHail) {
+      states.push(buildHailState(config.crowdReports, crowdReports, center, now));
+    }
+
     if (officialWarnings.degraded) {
       this.logger.warnRateLimited(
         'warncell-degraded',
@@ -302,16 +412,42 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
     for (const state of states) {
       this.managedAccessories.get(state.category)?.update(state, fault);
     }
+
+    void this.updateMatterAccessories(states).catch((error) => {
+      this.logger.warnRateLimited(
+        'matter-state-update',
+        `Could not update grouped Matter warning sensors: ${errorMessage(error)}`,
+      );
+    });
   }
 
   private buildInactiveStates(now: Date): CategoryState[] {
-    return this.getDesiredCategories(this.requireConfig()).map((category) => ({
+    return this.getDesiredStateCategories(this.requireConfig()).map((category) => ({
       category,
       displayName: getDisplayName(category),
       active: false,
       source: 'none',
       updatedAt: now.toISOString(),
     }));
+  }
+
+  private async updateMatterAccessories(states: readonly CategoryState[]): Promise<void> {
+    if (!this.groupedMatterParentUuid || this.groupedMatterPartIds.length === 0) {
+      return;
+    }
+
+    const matter = this.getMatterApi();
+
+    if (!matter || !this.isMatterEnabled()) {
+      return;
+    }
+
+    await updateGroupedMatterWarningStates(
+      matter,
+      this.groupedMatterParentUuid,
+      this.groupedMatterPartIds,
+      states,
+    );
   }
 
   private shouldSetFault(now: Date, referenceTime: string | undefined): boolean {
@@ -351,12 +487,30 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
     return categories;
   }
 
+  private getDesiredStateCategories(config: DwdSevereWeatherConfig): SensorCategory[] {
+    const categories = this.getDesiredCategories(config);
+
+    if (config.groupedWeatherWarnings.enabled && config.groupedWeatherWarnings.includeHail) {
+      categories.push('hail');
+    }
+
+    return categories;
+  }
+
   private requireConfig(): DwdSevereWeatherConfig {
     if (!this.validatedConfig) {
       throw new Error('DWD severe weather configuration is invalid.');
     }
 
     return this.validatedConfig;
+  }
+
+  private getMatterApi(): MatterApiLike | undefined {
+    return (this.api as { matter?: MatterApiLike }).matter;
+  }
+
+  private isMatterEnabled(): boolean {
+    return (this.api as { isMatterEnabled?: () => boolean }).isMatterEnabled?.() ?? false;
   }
 }
 

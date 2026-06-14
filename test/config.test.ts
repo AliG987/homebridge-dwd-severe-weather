@@ -13,6 +13,8 @@ describe('validateConfig', () => {
     expect(config.pollIntervalMinutes).toBe(5);
     expect(config.sensorType).toBe('occupancy');
     expect(config.overallSensor.enabled).toBe(true);
+    expect(config.groupedWeatherWarnings.enabled).toBe(false);
+    expect(config.groupedWeatherWarnings.includeHail).toBe(true);
     expect(config.warnings.thunderstorm.minimumLevel).toBe('orange');
     expect(config.warnings.thunderstorm.includePreWarnings).toBe(false);
     expect(config.warnings.storm.minimumLevel).toBe('yellow');
@@ -43,5 +45,20 @@ describe('validateConfig', () => {
 
   it('normalizes extreme to purple', () => {
     expect(normalizeConfiguredLevel('extreme')).toBe('purple');
+  });
+
+  it('reads grouped Matter warning sensor options', () => {
+    const config = validateConfig({
+      platform: 'DwdSevereWeather',
+      latitude: 52.52,
+      longitude: 13.405,
+      groupedWeatherWarnings: {
+        enabled: true,
+        includeHail: false,
+      },
+    });
+
+    expect(config.groupedWeatherWarnings.enabled).toBe(true);
+    expect(config.groupedWeatherWarnings.includeHail).toBe(false);
   });
 });

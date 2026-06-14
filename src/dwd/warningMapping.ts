@@ -21,6 +21,7 @@ const LEVEL_ORDER: Record<WeatherWarningLevel, number> = {
 const DISPLAY_NAMES: Record<SensorCategory, string> = {
   thunderstorm: 'Gewitter',
   storm: 'Sturm/Wind',
+  hail: 'Hagel',
   overall: 'Unwetter aktiv',
 };
 
@@ -117,11 +118,26 @@ export function filterCrowdReportsForCategory(
   center: GeoPoint,
   now = new Date(),
 ): CrowdReport[] {
+  return filterCrowdReportsForTypes(
+    reports,
+    CROWD_TYPES_BY_CATEGORY[category],
+    config,
+    center,
+    now,
+  );
+}
+
+export function filterCrowdReportsForTypes(
+  reports: readonly CrowdReport[],
+  allowedTypes: readonly CrowdReportType[],
+  config: CrowdReportsConfig,
+  center: GeoPoint,
+  now = new Date(),
+): CrowdReport[] {
   if (!config.enabled) {
     return [];
   }
 
-  const allowedTypes = CROWD_TYPES_BY_CATEGORY[category];
   const maxAgeMs = config.maxAgeMinutes * 60 * 1000;
   const nowMs = now.getTime();
 
@@ -137,6 +153,21 @@ export function filterCrowdReportsForCategory(
 
     return haversineDistanceKm(center, report) <= config.radiusKm;
   });
+}
+
+export function buildHailState(
+  crowdConfig: CrowdReportsConfig,
+  crowdReports: readonly CrowdReport[],
+  center: GeoPoint,
+  now = new Date(),
+): CategoryState {
+  const updatedAt = now.toISOString();
+  const crowdEnabledForMode = crowdConfig.enabled && crowdConfig.mode !== 'officialOnly';
+  const crowdMatches = filterCrowdReportsForTypes(crowdReports, ['hail'], crowdConfig, center, now);
+
+  return crowdEnabledForMode && crowdMatches.length >= crowdConfig.minimumReports
+    ? crowdState('hail', crowdMatches, updatedAt)
+    : inactiveState('hail', updatedAt);
 }
 
 export function buildCategoryState(
@@ -239,7 +270,7 @@ function officialState(
 }
 
 function crowdState(
-  category: WeatherWarningCategory,
+  category: SensorCategory,
   reports: readonly CrowdReport[],
   updatedAt: string,
 ): CategoryState {

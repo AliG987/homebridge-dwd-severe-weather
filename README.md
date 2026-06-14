@@ -29,6 +29,7 @@ This plugin is not an official product of Deutscher Wetterdienst.
   - MotionSensor
   - ContactSensor
   - Switch
+- Optional grouped Matter warning accessory for Homebridge bridges with Matter enabled.
 - Per-category minimum warning level.
 - Prewarnings ignored by default.
 - StatusFault after repeated/stale update failures.
@@ -54,6 +55,10 @@ Then add the platform to your Homebridge config.
   "sensorType": "occupancy",
   "overallSensor": {
     "enabled": true
+  },
+  "groupedWeatherWarnings": {
+    "enabled": false,
+    "includeHail": true
   },
   "warnings": {
     "thunderstorm": {
@@ -166,6 +171,7 @@ Relevant report categories:
 
 - Thunderstorm: hail, lightning, heavy rain
 - Storm/wind: wind
+- Hail Matter child sensor: hail only
 
 Important: live WarnWetter/crowdsourcing endpoint support is not hard-coded yet. The current DWD
 crowd provider returns no live activations. The architecture and tests are in place so a verified
@@ -192,6 +198,33 @@ Each accessory updates:
 
 Detailed metadata such as highest level, start, end, warning type, text, source and last update time
 is stored in accessory context and written to logs. The plugin does not claim Eve compatibility.
+
+## Matter Representation
+
+Homebridge 2.x Matter support is optional. When Matter is enabled for the bridge, this plugin can
+also expose a grouped Matter accessory:
+
+```json
+{
+  "groupedWeatherWarnings": {
+    "enabled": true,
+    "includeHail": true
+  }
+}
+```
+
+The grouped Matter accessory uses one parent `BridgedNode` named after the plugin instance and child
+endpoints for the configured warning states:
+
+- `Gewitter`
+- `Sturm/Wind`
+- `Hagel`, optional and crowd-report based only
+- `Unwetter aktiv`, when the overall sensor is enabled
+
+Each child endpoint is updated independently through Matter `booleanState`. If a future Homebridge
+Matter API exposes `RainSensor`, the weather-like children use it automatically. With Homebridge
+2.1.0, `RainSensor` is not exported through `api.matter.deviceTypes`, so the plugin uses
+`ContactSensor` child endpoints as a compatibility fallback.
 
 ## Polling, Cache and Failure Behavior
 

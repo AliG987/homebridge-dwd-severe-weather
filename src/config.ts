@@ -25,6 +25,11 @@ export interface CrowdReportsConfig {
   mode: CrowdMode;
 }
 
+export interface GroupedWeatherWarningsConfig {
+  enabled: boolean;
+  includeHail: boolean;
+}
+
 export interface DwdSevereWeatherConfig {
   platform: typeof PLATFORM_NAME;
   name: string;
@@ -37,6 +42,7 @@ export interface DwdSevereWeatherConfig {
   overallSensor: {
     enabled: boolean;
   };
+  groupedWeatherWarnings: GroupedWeatherWarningsConfig;
   warnings: Record<WeatherWarningCategory, CategoryWarningConfig>;
   crowdReports: CrowdReportsConfig;
 }
@@ -95,6 +101,9 @@ export function validateConfig(rawConfig: unknown): DwdSevereWeatherConfig {
     overallSensor: {
       enabled: readBoolean(readRecord(raw.overallSensor).enabled, true),
     },
+    groupedWeatherWarnings: readGroupedWeatherWarningsConfig(
+      readRecord(raw.groupedWeatherWarnings),
+    ),
     warnings: {
       thunderstorm: readCategoryWarningConfig(
         readRecord(readRecord(raw.warnings).thunderstorm),
@@ -103,6 +112,15 @@ export function validateConfig(rawConfig: unknown): DwdSevereWeatherConfig {
       storm: readCategoryWarningConfig(readRecord(readRecord(raw.warnings).storm), 'yellow'),
     },
     crowdReports: readCrowdReportsConfig(readRecord(raw.crowdReports)),
+  };
+}
+
+function readGroupedWeatherWarningsConfig(
+  raw: Record<string, unknown>,
+): GroupedWeatherWarningsConfig {
+  return {
+    enabled: readBoolean(raw.enabled, false),
+    includeHail: readBoolean(raw.includeHail, true),
   };
 }
 

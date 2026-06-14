@@ -1,5 +1,5 @@
 export type WeatherWarningCategory = 'thunderstorm' | 'storm';
-export type SensorCategory = WeatherWarningCategory | 'overall';
+export type SensorCategory = WeatherWarningCategory | 'hail' | 'overall';
 export type WeatherWarningLevel = 'yellow' | 'orange' | 'red' | 'purple';
 export type ConfiguredWarningLevel = WeatherWarningLevel | 'extreme';
 export type WarningSource = 'official' | 'crowd' | 'combined' | 'none';

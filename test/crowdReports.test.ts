@@ -3,6 +3,7 @@ import type { CategoryWarningConfig, CrowdReportsConfig } from '../src/config';
 import type { CrowdReport } from '../src/dwd/types';
 import {
   buildCategoryState,
+  buildHailState,
   filterCrowdReportsForCategory,
 } from '../src/dwd/warningMapping';
 
@@ -61,6 +62,30 @@ describe('crowd report filtering', () => {
     expect(oneReport.active).toBe(false);
     expect(twoReports.active).toBe(true);
     expect(twoReports.source).toBe('crowd');
+  });
+
+  it('builds hail state only from matching crowd reports', () => {
+    const oneHailReport = buildHailState(
+      crowdConfig,
+      [report('near-hail', 'hail', 52.52, 13.405, '2026-06-11T11:30:00.000Z')],
+      center,
+      now,
+    );
+    const twoHailReports = buildHailState(
+      crowdConfig,
+      [
+        report('near-hail-1', 'hail', 52.52, 13.405, '2026-06-11T11:30:00.000Z'),
+        report('near-hail-2', 'hail', 52.521, 13.405, '2026-06-11T11:40:00.000Z'),
+        report('near-wind', 'wind', 52.52, 13.405, '2026-06-11T11:45:00.000Z'),
+      ],
+      center,
+      now,
+    );
+
+    expect(oneHailReport.active).toBe(false);
+    expect(twoHailReports.active).toBe(true);
+    expect(twoHailReports.category).toBe('hail');
+    expect(twoHailReports.reportCount).toBe(2);
   });
 });
 

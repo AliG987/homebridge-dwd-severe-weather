@@ -92,7 +92,7 @@
       "groupedWeatherWarnings": {
         "title": "Grouped Matter warning sensors",
         "type": "object",
-        "description": "Optional Matter-only grouped warning accessory. Requires Matter to be enabled for this Homebridge bridge.",
+        "description": "Optional Matter-only grouped warning accessory. Requires Matter to be enabled for this Homebridge bridge. Automatically enabled on Matter-only child bridges unless explicitly disabled.",
         "properties": {
           "enabled": {
             "title": "Create grouped Matter accessory",

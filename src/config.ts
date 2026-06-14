@@ -101,9 +101,7 @@ export function validateConfig(rawConfig: unknown): DwdSevereWeatherConfig {
     overallSensor: {
       enabled: readBoolean(readRecord(raw.overallSensor).enabled, true),
     },
-    groupedWeatherWarnings: readGroupedWeatherWarningsConfig(
-      readRecord(raw.groupedWeatherWarnings),
-    ),
+    groupedWeatherWarnings: readGroupedWeatherWarningsConfig(raw),
     warnings: {
       thunderstorm: readCategoryWarningConfig(
         readRecord(readRecord(raw.warnings).thunderstorm),
@@ -116,12 +114,25 @@ export function validateConfig(rawConfig: unknown): DwdSevereWeatherConfig {
 }
 
 function readGroupedWeatherWarningsConfig(
-  raw: Record<string, unknown>,
+  rawConfig: Record<string, unknown>,
 ): GroupedWeatherWarningsConfig {
+  const raw = readRecord(rawConfig.groupedWeatherWarnings);
+
   return {
-    enabled: readBoolean(raw.enabled, false),
+    enabled: readBoolean(raw.enabled, shouldEnableGroupedMatterByDefault(rawConfig)),
     includeHail: readBoolean(raw.includeHail, true),
   };
+}
+
+function shouldEnableGroupedMatterByDefault(rawConfig: Record<string, unknown>): boolean {
+  const bridgeConfig = readRecord(rawConfig._bridge);
+  const hapConfig = readRecord(bridgeConfig.hap);
+  const matterConfig = readRecord(bridgeConfig.matter);
+  const hasMatterConfig = Object.keys(matterConfig).length > 0;
+  const matterEnabled = hasMatterConfig && readBoolean(matterConfig.enabled, true);
+  const hapEnabled = readBoolean(hapConfig.enabled, true);
+
+  return matterEnabled && !hapEnabled;
 }
 
 export function normalizeConfiguredLevel(level: ConfiguredWarningLevel): WeatherWarningLevel {

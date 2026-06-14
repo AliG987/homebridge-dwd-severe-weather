@@ -213,6 +213,9 @@ also expose a grouped Matter accessory:
 }
 ```
 
+On Matter-only child bridges, where HAP is disabled and Matter is enabled, this grouped accessory is
+enabled automatically unless `groupedWeatherWarnings.enabled` is explicitly set to `false`.
+
 The grouped Matter accessory uses one parent `BridgedNode` named after the plugin instance and child
 endpoints for the configured warning states:
 

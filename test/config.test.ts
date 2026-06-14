@@ -61,4 +61,43 @@ describe('validateConfig', () => {
     expect(config.groupedWeatherWarnings.enabled).toBe(true);
     expect(config.groupedWeatherWarnings.includeHail).toBe(false);
   });
+
+  it('enables grouped Matter warnings by default for Matter-only child bridges', () => {
+    const config = validateConfig({
+      platform: 'DwdSevereWeather',
+      latitude: 52.52,
+      longitude: 13.405,
+      _bridge: {
+        hap: {
+          enabled: false,
+        },
+        matter: {
+          enabled: true,
+        },
+      },
+    });
+
+    expect(config.groupedWeatherWarnings.enabled).toBe(true);
+  });
+
+  it('allows grouped Matter warnings to be explicitly disabled on Matter-only child bridges', () => {
+    const config = validateConfig({
+      platform: 'DwdSevereWeather',
+      latitude: 52.52,
+      longitude: 13.405,
+      groupedWeatherWarnings: {
+        enabled: false,
+      },
+      _bridge: {
+        hap: {
+          enabled: false,
+        },
+        matter: {
+          enabled: true,
+        },
+      },
+    });
+
+    expect(config.groupedWeatherWarnings.enabled).toBe(false);
+  });
 });

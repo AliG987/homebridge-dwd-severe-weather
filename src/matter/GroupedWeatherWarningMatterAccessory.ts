@@ -107,6 +107,19 @@ export function isGroupedMatterWarningAccessory(accessory: MatterAccessoryLike):
   return accessory.context.kind === GROUPED_MATTER_WARNING_CONTEXT_KIND;
 }
 
+export function isMatterAccessoryLike(accessory: unknown): accessory is MatterAccessoryLike {
+  if (!isRecord(accessory)) {
+    return false;
+  }
+
+  return (
+    typeof accessory.UUID === 'string' &&
+    typeof accessory.displayName === 'string' &&
+    'deviceType' in accessory &&
+    isRecord(accessory.context)
+  );
+}
+
 export function hasSameGroupedMatterParts(
   accessory: MatterAccessoryLike,
   desiredPartIds: readonly SensorCategory[],
@@ -182,4 +195,8 @@ function requireDeviceType(matter: MatterApiLike, deviceType: string): unknown {
 
 function readStringArray(value: unknown): string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string') ? value : [];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

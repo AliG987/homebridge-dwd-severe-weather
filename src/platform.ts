@@ -39,6 +39,7 @@ import {
   hasRainSensorDeviceType,
   hasSameGroupedMatterParts,
   isGroupedMatterWarningAccessory,
+  isMatterAccessoryLike,
   type MatterAccessoryLike,
   type MatterApiLike,
   updateGroupedMatterWarningStates,
@@ -101,7 +102,11 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
     this.cachedAccessories.set(accessory.UUID, accessory);
   }
 
-  public configureMatterAccessory(accessory: MatterAccessoryLike): void {
+  public configureMatterAccessory(accessory: unknown): void {
+    if (!isMatterAccessoryLike(accessory)) {
+      return;
+    }
+
     this.cachedMatterAccessories.set(accessory.UUID, accessory);
   }
 

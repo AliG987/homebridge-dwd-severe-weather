@@ -92,12 +92,11 @@
       "groupedWeatherWarnings": {
         "title": "Grouped Matter warning sensors",
         "type": "object",
-        "description": "Optional Matter-only grouped warning accessory. Requires Matter to be enabled for this Homebridge bridge. Automatically enabled on Matter-only child bridges unless explicitly disabled.",
+        "description": "Optional grouped warning accessory for Matter. When the enabled setting is omitted, it is enabled automatically while Matter is enabled for this Homebridge bridge. Set enabled to false to disable it explicitly.",
         "properties": {
           "enabled": {
             "title": "Create grouped Matter accessory",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           "includeHail": {
             "title": "Include hail child sensor",

@@ -26,7 +26,7 @@ export interface CrowdReportsConfig {
 }
 
 export interface GroupedWeatherWarningsConfig {
-  enabled: boolean;
+  enabled?: boolean;
   includeHail: boolean;
 }
 
@@ -119,20 +119,9 @@ function readGroupedWeatherWarningsConfig(
   const raw = readRecord(rawConfig.groupedWeatherWarnings);
 
   return {
-    enabled: readBoolean(raw.enabled, shouldEnableGroupedMatterByDefault(rawConfig)),
+    enabled: readOptionalBoolean(raw.enabled),
     includeHail: readBoolean(raw.includeHail, true),
   };
-}
-
-function shouldEnableGroupedMatterByDefault(rawConfig: Record<string, unknown>): boolean {
-  const bridgeConfig = readRecord(rawConfig._bridge);
-  const hapConfig = readRecord(bridgeConfig.hap);
-  const matterConfig = readRecord(bridgeConfig.matter);
-  const hasMatterConfig = Object.keys(matterConfig).length > 0;
-  const matterEnabled = hasMatterConfig && readBoolean(matterConfig.enabled, true);
-  const hapEnabled = readBoolean(hapConfig.enabled, true);
-
-  return matterEnabled && !hapEnabled;
 }
 
 export function normalizeConfiguredLevel(level: ConfiguredWarningLevel): WeatherWarningLevel {
@@ -205,6 +194,10 @@ function readOptionalNonEmptyString(value: unknown): string | undefined {
 
 function readBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
+}
+
+function readOptionalBoolean(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
 }
 
 function readEnum<T extends string>(value: unknown, values: readonly T[], fallback: T): T {

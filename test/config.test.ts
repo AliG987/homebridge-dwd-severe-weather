@@ -13,7 +13,7 @@ describe('validateConfig', () => {
     expect(config.pollIntervalMinutes).toBe(5);
     expect(config.sensorType).toBe('occupancy');
     expect(config.overallSensor.enabled).toBe(true);
-    expect(config.groupedWeatherWarnings.enabled).toBe(false);
+    expect(config.groupedWeatherWarnings.enabled).toBeUndefined();
     expect(config.groupedWeatherWarnings.includeHail).toBe(true);
     expect(config.warnings.thunderstorm.minimumLevel).toBe('orange');
     expect(config.warnings.thunderstorm.includePreWarnings).toBe(false);
@@ -62,7 +62,7 @@ describe('validateConfig', () => {
     expect(config.groupedWeatherWarnings.includeHail).toBe(false);
   });
 
-  it('enables grouped Matter warnings by default for Matter-only child bridges', () => {
+  it('keeps grouped Matter warning sensors in auto mode when enabled is omitted', () => {
     const config = validateConfig({
       platform: 'DwdSevereWeather',
       latitude: 52.52,
@@ -77,7 +77,7 @@ describe('validateConfig', () => {
       },
     });
 
-    expect(config.groupedWeatherWarnings.enabled).toBe(true);
+    expect(config.groupedWeatherWarnings.enabled).toBeUndefined();
   });
 
   it('allows grouped Matter warnings to be explicitly disabled on Matter-only child bridges', () => {

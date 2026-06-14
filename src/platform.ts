@@ -204,11 +204,12 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
   private async syncMatterAccessories(): Promise<void> {
     const config = this.requireConfig();
     const matter = this.getMatterApi();
+    const groupedMatterEnabled = this.isGroupedMatterWarningsEnabled(config);
     this.groupedMatterParentUuid = undefined;
     this.groupedMatterPartIds = [];
 
     if (!matter || !this.isMatterEnabled()) {
-      if (config.groupedWeatherWarnings.enabled) {
+      if (config.groupedWeatherWarnings.enabled === true) {
         this.logger.warnRateLimited(
           'matter-disabled',
           'Grouped Matter warning sensors are enabled in config, but Matter is not enabled for this '
@@ -233,7 +234,7 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
     const staleAccessories = [...this.cachedMatterAccessories.values()].filter(
       (accessory) =>
         isGroupedMatterWarningAccessory(accessory) &&
-        (!config.groupedWeatherWarnings.enabled ||
+        (!groupedMatterEnabled ||
           accessory.UUID !== desiredOptions.uuid ||
           !hasSameGroupedMatterParts(accessory, desiredPartIds)),
     );
@@ -245,7 +246,7 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
       }
     }
 
-    if (!config.groupedWeatherWarnings.enabled) {
+    if (!groupedMatterEnabled) {
       return;
     }
 
@@ -269,6 +270,10 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
     const accessory = buildGroupedMatterWarningAccessory(matter, desiredOptions);
 
     if (!cachedAccessory) {
+      this.logger.info(
+        `Registering grouped Matter warning accessory "${desiredOptions.displayName}" with parts: `
+          + desiredPartIds.map((partId) => getDisplayName(partId)).join(', '),
+      );
       await matter.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       this.cachedMatterAccessories.set(accessory.UUID, accessory);
     }
@@ -355,7 +360,10 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
       ? [...categoryStates, buildOverallState(categoryStates, now)]
       : categoryStates;
 
-    if (config.groupedWeatherWarnings.enabled && config.groupedWeatherWarnings.includeHail) {
+    if (
+      this.isGroupedMatterWarningsEnabled(config) &&
+      config.groupedWeatherWarnings.includeHail
+    ) {
       states.push(buildHailState(config.crowdReports, crowdReports, center, now));
     }
 
@@ -495,7 +503,10 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
   private getDesiredStateCategories(config: DwdSevereWeatherConfig): SensorCategory[] {
     const categories = this.getDesiredCategories(config);
 
-    if (config.groupedWeatherWarnings.enabled && config.groupedWeatherWarnings.includeHail) {
+    if (
+      this.isGroupedMatterWarningsEnabled(config) &&
+      config.groupedWeatherWarnings.includeHail
+    ) {
       categories.push('hail');
     }
 
@@ -512,6 +523,10 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
 
   private getMatterApi(): MatterApiLike | undefined {
     return (this.api as { matter?: MatterApiLike }).matter;
+  }
+
+  private isGroupedMatterWarningsEnabled(config: DwdSevereWeatherConfig): boolean {
+    return config.groupedWeatherWarnings.enabled ?? this.isMatterEnabled();
   }
 
   private isMatterEnabled(): boolean {

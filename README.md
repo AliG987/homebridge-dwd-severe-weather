@@ -57,7 +57,6 @@ Then add the platform to your Homebridge config.
     "enabled": true
   },
   "groupedWeatherWarnings": {
-    "enabled": false,
     "includeHail": true
   },
   "warnings": {
@@ -207,14 +206,15 @@ also expose a grouped Matter accessory:
 ```json
 {
   "groupedWeatherWarnings": {
-    "enabled": true,
     "includeHail": true
   }
 }
 ```
 
-On Matter-only child bridges, where HAP is disabled and Matter is enabled, this grouped accessory is
-enabled automatically unless `groupedWeatherWarnings.enabled` is explicitly set to `false`.
+When `groupedWeatherWarnings.enabled` is omitted, this grouped accessory is enabled automatically
+while Matter is enabled for the Homebridge bridge. Set `groupedWeatherWarnings.enabled` to `false`
+to disable it explicitly, or to `true` to require Matter warnings and log a warning if Matter is not
+available.
 
 The grouped Matter accessory uses one parent `BridgedNode` named after the plugin instance and child
 endpoints for the configured warning states:

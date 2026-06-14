@@ -9,7 +9,6 @@
     "enabled": true
   },
   "groupedWeatherWarnings": {
-    "enabled": false,
     "includeHail": true
   },
   "warnings": {

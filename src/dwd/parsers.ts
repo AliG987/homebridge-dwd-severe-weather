@@ -121,7 +121,7 @@ export function normalizeWarningLevel(value: unknown): WeatherWarningLevel {
     return 'red';
   }
 
-  if (normalized.includes('orange')) {
+  if (normalized.includes('orange') || normalized.includes('moderate')) {
     return 'orange';
   }
 

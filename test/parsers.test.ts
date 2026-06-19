@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { parseCapXml, parseWarnWetterWarnings } from '../src/dwd/parsers';
+import {
+  normalizeWarningLevel,
+  parseCapXml,
+  parseWarnWetterWarnings,
+} from '../src/dwd/parsers';
 
 describe('DWD parsers', () => {
+  it('maps CAP severity values to configured warning levels', () => {
+    expect(normalizeWarningLevel('Minor')).toBe('yellow');
+    expect(normalizeWarningLevel('Moderate')).toBe('orange');
+    expect(normalizeWarningLevel('Severe')).toBe('red');
+    expect(normalizeWarningLevel('Extreme')).toBe('purple');
+  });
+
   it('parses CAP XML into normalized warnings', () => {
     const warnings = parseCapXml(`
       <alert>

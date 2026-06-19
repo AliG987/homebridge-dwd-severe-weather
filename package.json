@@ -1,6 +1,6 @@
 {
   "name": "homebridge-dwd-severe-weather",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Homebridge dynamic platform plugin for severe weather warnings from the German Weather Service (DWD).",
   "license": "MIT",
   "author": "AliG987",

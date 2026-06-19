@@ -8,25 +8,28 @@ import {
 } from '../src/matter/GroupedWeatherWarningMatterAccessory';
 
 describe('grouped Matter warning accessory', () => {
-  it('builds a BridgedNode parent with four child endpoints by default', () => {
+  it('builds a BridgedNode parent with separate rain, thunderstorm and wind endpoints', () => {
     const matter = matterApi();
     const accessory = buildGroupedMatterWarningAccessory(matter, {
       uuid: 'matter-parent',
       displayName: 'DWD Unwetter',
+      includeRain: true,
       includeThunderstorm: true,
-      includeStorm: true,
+      includeWind: true,
       includeHail: true,
       includeOverall: true,
     });
 
     expect(accessory.deviceType).toBe('bridged-node');
     expect(accessory.parts?.map((part) => part.id)).toEqual([
+      'rain',
       'thunderstorm',
       'storm',
       'hail',
       'overall',
     ]);
     expect(accessory.parts?.map((part) => part.clusters.booleanState?.stateValue)).toEqual([
+      false,
       false,
       false,
       false,
@@ -43,14 +46,16 @@ describe('grouped Matter warning accessory', () => {
     const accessory = buildGroupedMatterWarningAccessory(matter, {
       uuid: 'matter-parent',
       displayName: 'DWD Unwetter',
+      includeRain: true,
       includeThunderstorm: true,
-      includeStorm: true,
+      includeWind: true,
       includeHail: true,
       includeOverall: true,
     });
 
     expect(hasRainSensorDeviceType(matter)).toBe(true);
     expect(accessory.parts?.map((part) => [part.id, part.deviceType])).toEqual([
+      ['rain', 'rain-sensor'],
       ['thunderstorm', 'rain-sensor'],
       ['storm', 'contact-sensor'],
       ['hail', 'rain-sensor'],
@@ -62,6 +67,7 @@ describe('grouped Matter warning accessory', () => {
     const updateAccessoryState = vi.fn<MatterApiLike['updateAccessoryState']>(async () => {});
     const matter = matterApi({ updateAccessoryState });
     const states: CategoryState[] = [
+      state('rain', false),
       state('thunderstorm', true),
       state('storm', false),
       state('hail', true),
@@ -71,11 +77,12 @@ describe('grouped Matter warning accessory', () => {
     await updateGroupedMatterWarningStates(
       matter,
       'matter-parent',
-      ['thunderstorm', 'storm', 'hail', 'overall'],
+      ['rain', 'thunderstorm', 'storm', 'hail', 'overall'],
       states,
     );
 
     expect(updateAccessoryState.mock.calls).toEqual([
+      ['matter-parent', 'booleanState', { stateValue: false }, 'rain'],
       ['matter-parent', 'booleanState', { stateValue: true }, 'thunderstorm'],
       ['matter-parent', 'booleanState', { stateValue: false }, 'storm'],
       ['matter-parent', 'booleanState', { stateValue: true }, 'hail'],

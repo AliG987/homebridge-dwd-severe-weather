@@ -19,6 +19,7 @@ const LEVEL_ORDER: Record<WeatherWarningLevel, number> = {
 };
 
 const DISPLAY_NAMES: Record<SensorCategory, string> = {
+  rain: 'Regen/Starkregen',
   thunderstorm: 'Gewitter',
   storm: 'Sturm/Wind',
   hail: 'Hagel',
@@ -26,15 +27,22 @@ const DISPLAY_NAMES: Record<SensorCategory, string> = {
 };
 
 const CROWD_TYPES_BY_CATEGORY: Record<WeatherWarningCategory, readonly CrowdReportType[]> = {
-  thunderstorm: ['hail', 'lightning', 'heavyRain'],
+  rain: ['heavyRain'],
+  thunderstorm: ['hail', 'lightning'],
   storm: ['wind'],
 };
 
 const EVENT_CODE_PREFIXES: Record<WeatherWarningCategory, readonly string[]> = {
-  // DWD event-code families vary by product. These prefixes are kept as a best-effort supplement
-  // to keyword matching and are intentionally isolated here for fixture-based parser tests.
-  thunderstorm: ['31', '33', '34', '35', '36', '38', '39'],
-  storm: ['24', '25', '26', '27', '28'],
+  // Current DWD CAP II codes, plus prefix matching for legacy four-digit event codes.
+  rain: [],
+  thunderstorm: ['31', '38', '46'],
+  storm: ['11', '57', '58'],
+};
+
+const EVENT_GROUPS: Record<WeatherWarningCategory, readonly string[]> = {
+  rain: ['rain'],
+  thunderstorm: ['thunderstorm', 'hail'],
+  storm: ['wind'],
 };
 
 export function getDisplayName(category: SensorCategory): string {
@@ -59,29 +67,24 @@ export function isWarningRelevantToCategory(
   warning: WeatherWarning,
   category: WeatherWarningCategory,
 ): boolean {
-  const normalizedText = normalizeText(
-    [warning.event, warning.eventCode, warning.headline, warning.description].filter(Boolean).join(' '),
-  );
+  const normalizedGroup = normalizeText(warning.eventGroup ?? '');
+
+  if (normalizedGroup) {
+    return EVENT_GROUPS[category].includes(normalizedGroup);
+  }
 
   if (matchesEventCodePrefix(warning.eventCode, EVENT_CODE_PREFIXES[category])) {
     return true;
   }
 
-  if (category === 'thunderstorm') {
-    return (
-      normalizedText.includes('gewitter') ||
-      normalizedText.includes('blitz') ||
-      normalizedText.includes('hagel') ||
-      normalizedText.includes('starkregen')
-    );
+  const primaryText = normalizeText([warning.event, warning.headline].filter(Boolean).join(' '));
+  const primaryCategory = categoryFromText(primaryText);
+
+  if (primaryCategory) {
+    return primaryCategory === category;
   }
 
-  return (
-    normalizedText.includes('wind') ||
-    normalizedText.includes('sturm') ||
-    normalizedText.includes('sturmboe') ||
-    normalizedText.includes('orkan')
-  );
+  return categoryFromText(normalizeText(warning.description ?? '')) === category;
 }
 
 export function filterOfficialWarningsForCategory(
@@ -333,6 +336,36 @@ function matchesEventCodePrefix(
   }
 
   return prefixes.some((prefix) => eventCode.startsWith(prefix));
+}
+
+function categoryFromText(value: string): WeatherWarningCategory | undefined {
+  if (
+    value.includes('gewitter') ||
+    value.includes('blitz') ||
+    value.includes('hagel')
+  ) {
+    return 'thunderstorm';
+  }
+
+  if (
+    value.includes('starkregen') ||
+    value.includes('dauerregen') ||
+    value.includes('regen')
+  ) {
+    return 'rain';
+  }
+
+  if (
+    value.includes('wind') ||
+    value.includes('sturm') ||
+    value.includes('sturmboe') ||
+    value.includes('orkan') ||
+    value.includes('boe')
+  ) {
+    return 'storm';
+  }
+
+  return undefined;
 }
 
 function normalizeText(value: string): string {

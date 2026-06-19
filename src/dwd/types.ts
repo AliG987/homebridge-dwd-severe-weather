@@ -1,4 +1,4 @@
-export type WeatherWarningCategory = 'thunderstorm' | 'storm';
+export type WeatherWarningCategory = 'rain' | 'thunderstorm' | 'storm';
 export type SensorCategory = WeatherWarningCategory | 'hail' | 'overall';
 export type WeatherWarningLevel = 'yellow' | 'orange' | 'red' | 'purple';
 export type ConfiguredWarningLevel = WeatherWarningLevel | 'extreme';
@@ -19,6 +19,7 @@ export interface WeatherWarning {
   warnCellIds: string[];
   event: string;
   eventCode?: string;
+  eventGroup?: string;
   level: WeatherWarningLevel;
   isPreWarning: boolean;
   startsAt: string;

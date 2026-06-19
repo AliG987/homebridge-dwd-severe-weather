@@ -134,6 +134,7 @@ function parseCapAlert(alert: XmlRecord): Array<WeatherWarning | undefined> {
 
   return infoRecords.map((info, index) => {
     const parameters = readParameters(info);
+    const eventCodes = readNamedValues(info, 'eventCode');
     const areaRecords = getRecords(info, 'area');
     const warnCellIds = uniqueStrings(
       areaRecords.flatMap((area) => readGeocodes(area)).filter((value) => value.length > 0),
@@ -143,10 +144,14 @@ function parseCapAlert(alert: XmlRecord): Array<WeatherWarning | undefined> {
     const headline = readString(info.headline);
     const description = readString(info.description);
     const eventCode =
+      readString(eventCodes.II) ??
       readString(parameters.EVENT_CODE) ??
       readString(parameters.EC_II) ??
-      readString(parameters.EC_GROUP) ??
       readString(info.eventCode);
+    const eventGroup =
+      readString(eventCodes.GROUP) ??
+      readString(parameters.EVENT_GROUP) ??
+      readString(parameters.EC_GROUP);
     const level = normalizeWarningLevel(
       parameters.SEVERITY_LEVEL ?? parameters.WARNING_LEVEL ?? parameters.LEVEL ?? info.severity,
     );
@@ -167,6 +172,7 @@ function parseCapAlert(alert: XmlRecord): Array<WeatherWarning | undefined> {
       warnCellIds,
       event,
       eventCode,
+      eventGroup,
       level,
       isPreWarning: isPreWarning(event, headline, description, parameters),
       startsAt,
@@ -197,7 +203,8 @@ function parseWarnWetterWarning(
     source: 'official',
     warnCellIds: [warnCellId],
     event,
-    eventCode: readString(warningRecord.event) ?? readString(warningRecord.eventCode),
+    eventCode: readString(warningRecord.eventCode),
+    eventGroup: readString(warningRecord.eventGroup),
     level: normalizeWarningLevel(warningRecord.level),
     isPreWarning: isPreWarning(event, headline, description, warningRecord),
     startsAt,
@@ -209,15 +216,19 @@ function parseWarnWetterWarning(
 }
 
 function readParameters(info: XmlRecord): Record<string, unknown> {
+  return readNamedValues(info, 'parameter');
+}
+
+function readNamedValues(info: XmlRecord, recordName: string): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
-  for (const parameter of getRecords(info, 'parameter')) {
-    const name = readString(parameter.valueName);
+  for (const record of getRecords(info, recordName)) {
+    const name = readString(record.valueName);
     if (!name) {
       continue;
     }
 
-    result[name.toUpperCase()] = parameter.value;
+    result[name.toUpperCase()] = record.value;
   }
 
   return result;

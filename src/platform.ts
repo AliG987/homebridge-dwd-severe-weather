@@ -224,8 +224,9 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
         `${PLUGIN_NAME}:${config.name}:matter:groupedWeatherWarnings`,
       ),
       displayName: config.name,
+      includeRain: config.warnings.rain.enabled,
       includeThunderstorm: config.warnings.thunderstorm.enabled,
-      includeStorm: config.warnings.storm.enabled,
+      includeWind: config.warnings.storm.enabled,
       includeHail: config.groupedWeatherWarnings.includeHail,
       includeOverall: config.overallSensor.enabled,
     };
@@ -336,7 +337,7 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
         : [];
     const categoryStates: CategoryState[] = [];
 
-    const warningCategories: WeatherWarningCategory[] = ['thunderstorm', 'storm'];
+    const warningCategories: WeatherWarningCategory[] = ['rain', 'thunderstorm', 'storm'];
 
     for (const category of warningCategories) {
       if (!config.warnings[category].enabled) {
@@ -485,6 +486,10 @@ export class DwdSevereWeatherPlatform implements DynamicPlatformPlugin {
   private getDesiredCategories(config: DwdSevereWeatherConfig): SensorCategory[] {
     const categories: SensorCategory[] = [];
 
+    if (config.warnings.rain.enabled) {
+      categories.push('rain');
+    }
+
     if (config.warnings.thunderstorm.enabled) {
       categories.push('thunderstorm');
     }
@@ -543,7 +548,12 @@ interface FetchOfficialWarningsResult {
 function readAccessoryCategory(accessory: PlatformAccessory): SensorCategory | undefined {
   const category = (accessory.context as Record<string, unknown>).category;
 
-  return category === 'thunderstorm' || category === 'storm' || category === 'overall'
+  return (
+    category === 'rain' ||
+    category === 'thunderstorm' ||
+    category === 'storm' ||
+    category === 'overall'
+  )
     ? category
     : undefined;
 }

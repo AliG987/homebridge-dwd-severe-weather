@@ -5,8 +5,9 @@ Homebridge dynamic platform plugin for severe weather warnings from the German W
 
 The plugin exposes DWD warnings for a configured location as HomeKit sensors:
 
-- `Gewitter`
-- `Sturm/Wind`
+- `Regen/Starkregen` for DWD `RAIN`
+- `Gewitter` for DWD `THUNDERSTORM`
+- `Sturm/Wind` for DWD `WIND`
 - `Unwetter aktiv`
 
 Official DWD warnings are the primary signal. Optional crowd report support is prepared behind a
@@ -60,12 +61,17 @@ Then add the platform to your Homebridge config.
     "includeHail": true
   },
   "warnings": {
+    "rain": {
+      "enabled": true,
+      "minimumLevel": "yellow",
+      "includePreWarnings": false
+    },
     "thunderstorm": {
       "enabled": true,
       "minimumLevel": "orange",
       "includePreWarnings": false
     },
-    "storm": {
+    "wind": {
       "enabled": true,
       "minimumLevel": "yellow",
       "includePreWarnings": false
@@ -81,6 +87,9 @@ Then add the platform to your Homebridge config.
   "debug": false
 }
 ```
+
+`warnings.wind` replaces the older `warnings.storm` configuration key. Existing configurations
+using `warnings.storm` remain supported as a compatibility alias.
 
 ## Latitude/Longitude and Warncell ID
 
@@ -168,8 +177,9 @@ Modes:
 
 Relevant report categories:
 
-- Thunderstorm: hail, lightning, heavy rain
-- Storm/wind: wind
+- Rain: heavy rain
+- Thunderstorm: hail, lightning
+- Wind/storm: wind
 - Hail Matter child sensor: hail only
 
 Important: live WarnWetter/crowdsourcing endpoint support is not hard-coded yet. The current DWD
@@ -219,6 +229,7 @@ available.
 The grouped Matter accessory uses one parent `BridgedNode` named after the plugin instance and child
 endpoints for the configured warning states:
 
+- `Regen/Starkregen`
 - `Gewitter`
 - `Sturm/Wind`
 - `Hagel`, optional and crowd-report based only

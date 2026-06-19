@@ -13,10 +13,14 @@ describe('DWD parsers', () => {
           <expires>2026-06-11T13:00:00+00:00</expires>
           <headline>Amtliche Warnung vor schwerem Gewitter</headline>
           <description>Blitz, Hagel und Starkregen moeglich.</description>
-          <parameter>
-            <valueName>EVENT_CODE</valueName>
-            <value>3101</value>
-          </parameter>
+          <eventCode>
+            <valueName>II</valueName>
+            <value>46</value>
+          </eventCode>
+          <eventCode>
+            <valueName>GROUP</valueName>
+            <value>THUNDERSTORM</value>
+          </eventCode>
           <area>
             <areaDesc>Berlin</areaDesc>
             <geocode>
@@ -31,6 +35,8 @@ describe('DWD parsers', () => {
     expect(warnings).toHaveLength(1);
     expect(warnings[0]?.warnCellIds).toEqual(['111000000']);
     expect(warnings[0]?.event).toBe('Schweres Gewitter');
+    expect(warnings[0]?.eventCode).toBe('46');
+    expect(warnings[0]?.eventGroup).toBe('THUNDERSTORM');
     expect(warnings[0]?.level).toBe('red');
   });
 
@@ -52,6 +58,7 @@ describe('DWD parsers', () => {
 
     expect(warnings).toHaveLength(1);
     expect(warnings[0]?.warnCellIds).toEqual(['111000000']);
+    expect(warnings[0]?.eventCode).toBeUndefined();
     expect(warnings[0]?.level).toBe('orange');
   });
 

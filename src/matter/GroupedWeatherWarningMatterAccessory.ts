@@ -45,8 +45,9 @@ export interface MatterAccessoryLike {
 export interface GroupedMatterWarningOptions {
   uuid: string;
   displayName: string;
+  includeRain: boolean;
   includeThunderstorm: boolean;
-  includeStorm: boolean;
+  includeWind: boolean;
   includeHail: boolean;
   includeOverall: boolean;
 }
@@ -56,11 +57,15 @@ export function getGroupedMatterPartIds(
 ): SensorCategory[] {
   const partIds: SensorCategory[] = [];
 
+  if (options.includeRain) {
+    partIds.push('rain');
+  }
+
   if (options.includeThunderstorm) {
     partIds.push('thunderstorm');
   }
 
-  if (options.includeStorm) {
+  if (options.includeWind) {
     partIds.push('storm');
   }
 

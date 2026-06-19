@@ -30,11 +30,53 @@ describe('warning mapping', () => {
     expect(levelMeetsMinimum('yellow', 'orange')).toBe(false);
   });
 
-  it('detects thunderstorm and storm warnings', () => {
+  it('detects separate rain, thunderstorm and wind warnings', () => {
+    expect(isWarningRelevantToCategory(warning({ event: 'Starkregen' }), 'rain')).toBe(true);
     expect(isWarningRelevantToCategory(warning({ event: 'Schweres Gewitter' }), 'thunderstorm')).toBe(
       true,
     );
     expect(isWarningRelevantToCategory(warning({ event: 'Sturmboeen' }), 'storm')).toBe(true);
+  });
+
+  it('maps each official DWD group to exactly one warning category', () => {
+    const cases = [
+      { eventGroup: 'RAIN', expected: 'rain' },
+      { eventGroup: 'THUNDERSTORM', expected: 'thunderstorm' },
+      { eventGroup: 'WIND', expected: 'storm' },
+    ] as const;
+    const categories = ['rain', 'thunderstorm', 'storm'] as const;
+
+    for (const { eventGroup, expected } of cases) {
+      const groupedWarning = warning({ eventGroup });
+
+      for (const category of categories) {
+        expect(isWarningRelevantToCategory(groupedWarning, category)).toBe(category === expected);
+      }
+    }
+  });
+
+  it('does not treat storm gusts inside a thunderstorm description as a separate storm warning', () => {
+    const thunderstorm = warning({
+      event: 'Starkes Gewitter',
+      eventCode: '38',
+      eventGroup: 'THUNDERSTORM',
+      description: 'Dabei gibt es schwere Sturmböen, Starkregen und Hagel.',
+    });
+
+    expect(isWarningRelevantToCategory(thunderstorm, 'thunderstorm')).toBe(true);
+    expect(isWarningRelevantToCategory(thunderstorm, 'rain')).toBe(false);
+    expect(isWarningRelevantToCategory(thunderstorm, 'storm')).toBe(false);
+  });
+
+  it('uses the DWD WIND group for storm warnings', () => {
+    const storm = warning({
+      event: 'Sturm',
+      eventCode: '58',
+      eventGroup: 'WIND',
+    });
+
+    expect(isWarningRelevantToCategory(storm, 'thunderstorm')).toBe(false);
+    expect(isWarningRelevantToCategory(storm, 'storm')).toBe(true);
   });
 
   it('ignores prewarnings unless explicitly enabled', () => {

@@ -110,8 +110,56 @@
         "title": "Official warning categories",
         "type": "object",
         "properties": {
+          "rain": {
+            "title": "Rain / Heavy rain (DWD RAIN)",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "title": "Enabled",
+                "type": "boolean",
+                "default": true
+              },
+              "minimumLevel": {
+                "title": "Minimum warning level",
+                "type": "string",
+                "default": "yellow",
+                "oneOf": [
+                  {
+                    "title": "Yellow",
+                    "enum": [
+                      "yellow"
+                    ]
+                  },
+                  {
+                    "title": "Orange",
+                    "enum": [
+                      "orange"
+                    ]
+                  },
+                  {
+                    "title": "Red",
+                    "enum": [
+                      "red"
+                    ]
+                  },
+                  {
+                    "title": "Purple / Extreme",
+                    "enum": [
+                      "purple",
+                      "extreme"
+                    ]
+                  }
+                ]
+              },
+              "includePreWarnings": {
+                "title": "Include prewarnings",
+                "type": "boolean",
+                "default": false
+              }
+            }
+          },
           "thunderstorm": {
-            "title": "Thunderstorm",
+            "title": "Thunderstorm (DWD THUNDERSTORM)",
             "type": "object",
             "properties": {
               "enabled": {
@@ -158,8 +206,8 @@
               }
             }
           },
-          "storm": {
-            "title": "Storm / Wind",
+          "wind": {
+            "title": "Wind / Storm (DWD WIND)",
             "type": "object",
             "properties": {
               "enabled": {

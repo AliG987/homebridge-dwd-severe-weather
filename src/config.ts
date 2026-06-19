@@ -71,6 +71,7 @@ const WARNING_LEVELS: readonly ConfiguredWarningLevel[] = [
 
 export function validateConfig(rawConfig: unknown): DwdSevereWeatherConfig {
   const raw = requireRecord(rawConfig, 'Configuration must be an object.');
+  const rawWarnings = readRecord(raw.warnings);
 
   const latitude = requireFiniteNumber(raw.latitude, 'latitude');
   const longitude = requireFiniteNumber(raw.longitude, 'longitude');
@@ -103,11 +104,15 @@ export function validateConfig(rawConfig: unknown): DwdSevereWeatherConfig {
     },
     groupedWeatherWarnings: readGroupedWeatherWarningsConfig(raw),
     warnings: {
+      rain: readCategoryWarningConfig(readRecord(rawWarnings.rain), 'yellow'),
       thunderstorm: readCategoryWarningConfig(
-        readRecord(readRecord(raw.warnings).thunderstorm),
+        readRecord(rawWarnings.thunderstorm),
         'orange',
       ),
-      storm: readCategoryWarningConfig(readRecord(readRecord(raw.warnings).storm), 'yellow'),
+      storm: readCategoryWarningConfig(
+        isRecord(rawWarnings.wind) ? rawWarnings.wind : readRecord(rawWarnings.storm),
+        'yellow',
+      ),
     },
     crowdReports: readCrowdReportsConfig(readRecord(raw.crowdReports)),
   };

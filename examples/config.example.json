@@ -12,12 +12,17 @@
     "includeHail": true
   },
   "warnings": {
+    "rain": {
+      "enabled": true,
+      "minimumLevel": "yellow",
+      "includePreWarnings": false
+    },
     "thunderstorm": {
       "enabled": true,
       "minimumLevel": "orange",
       "includePreWarnings": false
     },
-    "storm": {
+    "wind": {
       "enabled": true,
       "minimumLevel": "yellow",
       "includePreWarnings": false

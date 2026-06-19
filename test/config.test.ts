@@ -15,6 +15,8 @@ describe('validateConfig', () => {
     expect(config.overallSensor.enabled).toBe(true);
     expect(config.groupedWeatherWarnings.enabled).toBeUndefined();
     expect(config.groupedWeatherWarnings.includeHail).toBe(true);
+    expect(config.warnings.rain.minimumLevel).toBe('yellow');
+    expect(config.warnings.rain.includePreWarnings).toBe(false);
     expect(config.warnings.thunderstorm.minimumLevel).toBe('orange');
     expect(config.warnings.thunderstorm.includePreWarnings).toBe(false);
     expect(config.warnings.storm.minimumLevel).toBe('yellow');
@@ -60,6 +62,44 @@ describe('validateConfig', () => {
 
     expect(config.groupedWeatherWarnings.enabled).toBe(true);
     expect(config.groupedWeatherWarnings.includeHail).toBe(false);
+  });
+
+  it('reads separate rain, thunderstorm and wind warning options', () => {
+    const config = validateConfig({
+      platform: 'DwdSevereWeather',
+      latitude: 52.52,
+      longitude: 13.405,
+      warnings: {
+        rain: {
+          minimumLevel: 'orange',
+        },
+        thunderstorm: {
+          minimumLevel: 'red',
+        },
+        wind: {
+          minimumLevel: 'purple',
+        },
+      },
+    });
+
+    expect(config.warnings.rain.minimumLevel).toBe('orange');
+    expect(config.warnings.thunderstorm.minimumLevel).toBe('red');
+    expect(config.warnings.storm.minimumLevel).toBe('purple');
+  });
+
+  it('keeps the legacy storm configuration key as a wind alias', () => {
+    const config = validateConfig({
+      platform: 'DwdSevereWeather',
+      latitude: 52.52,
+      longitude: 13.405,
+      warnings: {
+        storm: {
+          minimumLevel: 'red',
+        },
+      },
+    });
+
+    expect(config.warnings.storm.minimumLevel).toBe('red');
   });
 
   it('keeps grouped Matter warning sensors in auto mode when enabled is omitted', () => {
